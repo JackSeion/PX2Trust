@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trader Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      async function connectWallet() {
+        if (window.ethereum) {
+          try {
+            const accounts = await ethereum.request({
+              method: "eth_requestAccounts",
+            });
+            const account = accounts[0];
+            localStorage.setItem("walletAddress", account);
+            window.location.href = "profile.html";
+          } catch (err) {
+            console.error("User rejected MetaMask request", err);
+          }
+        } else {
+          alert("Please install MetaMask");
+        }
+      }
+
+      window.onload = () => {
+        const btn = document.getElementById("connect-btn");
+        const saved = localStorage.getItem("walletAddress");
+
+        if (saved) {
+          btn.innerText =
+            "Connect MetaMask"
+          btn.disabled = false;
+        } else {
+          btn.innerText = "Connect MetaMask";
+          btn.disabled = false;
+        }
+      };
+    </script>
+  </head>
+
+  <body class="bg-gray-900 text-white font-sans">
+    <div class="min-h-screen flex flex-col items-center justify-center px-4">
+      <div class="bg-gray-800 w-full max-w-xl p-8 rounded-lg shadow-lg text-center">
+        <h1 class="text-3xl font-bold mb-6">Welcome to Trader Portal</h1>
+
+        <button
+          id="connect-btn"
+          onclick="connectWallet()"
+          class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-lg font-semibold transition mb-4"
+        >
+          Connect MetaMask
+        </button>
+
+        <a
+          href="consumer.html"
+          class="inline-block bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg text-lg font-semibold transition"
+        >
+          Go to Consumer Portal
+        </a>
+      </div>
+    </div>
+  </body>
+</html>

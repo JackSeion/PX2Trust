@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trader Profile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans">
+  <div class="min-h-screen flex flex-col items-center justify-center px-4">
+    <div class="bg-gray-800 w-full max-w-2xl p-8 rounded-lg shadow-lg">
+      <h1 class="text-3xl font-bold mb-6 text-center">Trader Profile</h1>
+
+      <div id="wallet-display" class="text-green-400 text-center font-semibold mb-6"></div>
+
+      <!-- Stats -->
+      <div class="text-center mb-6">
+        <h2 class="text-xl font-bold mb-2">📊 Reputation Stats</h2>
+        <p id="stats" class="text-gray-300">Loading...</p>
+      </div>
+
+      <!-- Badge -->
+      <div class="text-center mb-6">
+        <h2 class="text-xl font-bold mb-2">🏅 NFT Badge</h2>
+        <div id="badge-display"><p class="text-gray-400">No badge yet</p></div>
+      </div>
+
+      <!-- Reviews -->
+      <div>
+        <h2 class="text-xl font-bold mb-3">📝 User Reviews</h2>
+
+        <!-- Filter -->
+        <div class="mb-3 flex justify-end">
+          <label for="rating-filter" class="mr-2 text-gray-300">Filter:</label>
+          <select id="rating-filter" class="bg-gray-700 text-white p-1 rounded">
+            <option value="all">All</option>
+            <option value="5">⭐ 5</option>
+            <option value="4">⭐ 4</option>
+            <option value="3">⭐ 3</option>
+            <option value="2">⭐ 2</option>
+            <option value="1">⭐ 1</option>
+          </select>
+        </div>
+
+        <div class="max-h-64 overflow-y-auto">
+          <ul id="review-list" class="space-y-3 text-sm"></ul>
+        </div>
+      </div>
+
+      <div class="mt-6 text-center">
+        <a href="index.html" class="text-blue-400 hover:underline">← Back to Trader Portal</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allReviews = [];
+
+    function renderReviews(filter) {
+      const reviewList = document.getElementById("review-list");
+      reviewList.innerHTML = "";
+
+      let filtered = allReviews;
+      if (filter !== "all") {
+        filtered = allReviews.filter(r => r.rating == filter);
+      }
+
+      if (filtered.length === 0) {
+        reviewList.innerHTML = `<li class="text-gray-400">No reviews found.</li>`;
+      } else {
+        filtered.forEach(r => {
+          reviewList.innerHTML += `
+            <li class="bg-gray-700 p-3 rounded">
+              <span class="font-semibold text-green-400">${r.reviewer}:</span>
+              ${"⭐".repeat(r.rating)}<br />
+              ${r.comment}
+            </li>`;
+        });
+      }
+    }
+
+    async function loadProfile() {
+      const wallet = localStorage.getItem("walletAddress")?.toLowerCase();
+      if (!wallet) {
+        alert("No wallet connected!");
+        window.location.href = "index.html";
+        return;
+      }
+
+      document.getElementById("wallet-display").innerText = `Wallet: ${wallet}`;
+
+      // Fetch trader stats
+      const res = await fetch(`http://localhost:5000/api/traders/${wallet}`);
+      const data = await res.json();
+
+      document.getElementById("stats").innerText =
+        `Reviews: ${data.reviewCount} | Avg Rating: ${data.avgRating}`;
+
+      // Static Badge Logic
+      const badgeDiv = document.getElementById("badge-display");
+      if (data.reviewCount >= 20 && data.avgRating >= 4) {
+        badgeDiv.innerHTML = `
+          <img src="https://blush-gigantic-canidae-140.mypinata.cloud/ipfs/bafybeihqvdkkrhs2dxvg4e3fsgojgztxdhjhosu4n3rbxl6yswaed5ai5m/Gold_Pear.png"
+               alt="Gold NFT" class="w-32 h-32 mx-auto rounded-lg border" />
+          <p class="mt-2 text-yellow-400 font-bold">Gold Tier - 20+ Reviews, 4.0+ Rating</p>`;
+      } else if (data.reviewCount >= 10 && data.avgRating >= 4) {
+        badgeDiv.innerHTML = `
+          <img src="https://blush-gigantic-canidae-140.mypinata.cloud/ipfs/bafybeihqvdkkrhs2dxvg4e3fsgojgztxdhjhosu4n3rbxl6yswaed5ai5m/Silver_Pear.png"
+               alt="Silver NFT" class="w-32 h-32 mx-auto rounded-lg border" />
+          <p class="mt-2 text-gray-200 font-semibold">Silver Tier - 10+ Reviews, 4.0+ Rating</p>`;
+      } else if (data.reviewCount >= 5 && data.avgRating >= 4) {
+        badgeDiv.innerHTML = `
+          <img src="https://blush-gigantic-canidae-140.mypinata.cloud/ipfs/bafybeihqvdkkrhs2dxvg4e3fsgojgztxdhjhosu4n3rbxl6yswaed5ai5m/Bronze_Pear.png"
+               alt="Bronze NFT" class="w-32 h-32 mx-auto rounded-lg border" />
+          <p class="mt-2 text-yellow-300">Bronze Tier - 5+ Reviews, 4.0+ Rating</p>`;
+      } else {
+        badgeDiv.innerHTML = `<p class="text-gray-400">No badge yet</p>`;
+      }
+
+      // Fetch reviews
+      const revRes = await fetch(`http://localhost:5000/api/reviews/${wallet}`);
+      allReviews = await revRes.json();
+      renderReviews("all");
+
+      // Filter change event
+      document.getElementById("rating-filter").addEventListener("change", (e) => {
+        renderReviews(e.target.value);
+      });
+    }
+
+    window.onload = loadProfile;
+  </script>
+</body>
+</html>
